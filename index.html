@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Racing Game</title>
+<style>
+body{margin:0;background:#000;text-align:center}
+canvas{background:#222;display:block;margin:auto}
+</style>
+</head>
+<body>
+<canvas id="game" width="420" height="640"></canvas>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const WIDTH=420, HEIGHT=640;
+const ROAD_WIDTH=260, LANES=3;
+
+let curve=0, curveDir=1;
+let zones=["City","Desert","Forest"];
+let zone=0;
+let score=0;
+
+let playerLane=1;
+let nitro=100;
+let speed=5;
+
+let enemies=[];
+
+function roadX(){
+  return (WIDTH-ROAD_WIDTH)/2 + curve;
+}
+
+function laneX(l){
+  return roadX()+40+l*(ROAD_WIDTH/LANES);
+}
+
+function spawnEnemy(){
+  return {x:laneX(Math.floor(Math.random()*LANES)), y:-80}
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft") playerLane=Math.max(0,playerLane-1);
+  if(e.key==="ArrowRight") playerLane=Math.min(LANES-1,playerLane+1);
+  if(e.key===" ") speed=9;
+});
+
+document.addEventListener("keyup",()=>speed=5);
+
+function bg(){
+  if(zones[zone]=="City") ctx.fillStyle="#2a2a3c";
+  else if(zones[zone]=="Desert") ctx.fillStyle="#96783c";
+  else ctx.fillStyle="#145028";
+  ctx.fillRect(0,0,WIDTH,HEIGHT);
+}
+
+function road(){
+  ctx.fillStyle="#444";
+  ctx.fillRect(roadX(),0,ROAD_WIDTH,HEIGHT);
+  ctx.strokeStyle="white";
+  for(let i=1;i<LANES;i++){
+    let x=roadX()+i*ROAD_WIDTH/LANES;
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,HEIGHT);
+    ctx.stroke();
+  }
+}
+
+function loop(){
+  bg();
+  road();
+
+  curve+=curveDir*0.3;
+  if(Math.abs(curve)>40) curveDir*=-1;
+
+  score++;
+  if(score%1500==0) zone=(zone+1)%zones.length;
+
+  if(Math.random()<0.03) enemies.push(spawnEnemy());
+
+  enemies.forEach(e=>{
+    e.y+=speed;
+    ctx.fillStyle="red";
+    ctx.fillRect(e.x,e.y,40,80);
+  });
+
+  enemies=enemies.filter(e=>e.y<HEIGHT+100);
+
+  let px=laneX(playerLane);
+  ctx.fillStyle="#32c8ff";
+  ctx.fillRect(px,480,40,80);
+
+  ctx.fillStyle="white";
+  ctx.fillText("Zone: "+zones[zone],10,20);
+  ctx.fillText("Score: "+score,10,40);
+  ctx.fillText("Nitro: "+nitro,10,60);
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
